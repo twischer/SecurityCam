@@ -1,0 +1,9 @@
+MIDlet-1: Security Cam,,SecurityCam
+MIDlet-Jar-URL: SecurityCam.jar
+MIDlet-Permissions-Opt: javax.microedition.io.Connector.file.read,javax.microedition.io.Connector.file.write
+MicroEdition-Configuration: CLDC-1.0
+MIDlet-Version: 1.0.0
+MIDlet-Name: SecurityCam Midlet Suite
+MIDlet-Vendor: Midlet Suite Vendor
+MIDlet-Permissions: 
+MicroEdition-Profile: MIDP-1.0
