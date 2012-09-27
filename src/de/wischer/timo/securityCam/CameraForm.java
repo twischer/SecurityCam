@@ -35,7 +35,7 @@ import javax.microedition.midlet.MIDlet;
 public class CameraForm extends Form {
 	private final MIDlet midlet;
 	private final Command cmdStop = new Command("Stop", Command.SCREEN, 1);
-	private final Command cmdExit = new Command("Exit", Command.SCREEN, 2);
+	private final Command cmdExit = new Command("Exit", Command.SCREEN, 3);
 	private Player player;
 	private VideoControl videoControl;
 	private final CaptureThread captureThread;

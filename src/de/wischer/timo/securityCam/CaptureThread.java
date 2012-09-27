@@ -41,23 +41,21 @@ public class CaptureThread extends Thread {
 		running = true;
 		
 		start();
-		
-		//boolean ta = interrupt0();
 	}
 
 	public void run() {
 		try {
 		while(running) {
-			final byte[] photo = videoControl.getSnapshot("encoding=jpeg&width=320&height=240");
-			// width=1280&height=960
+			final byte[] photo = videoControl.getSnapshot("encoding=jpeg");
+			// &width=320&height=240  width=1280&height=960
 			saveImage2File(photo);
 			
 			Thread.sleep(snapshotTime*1000);
 		}
-		} catch (MediaException me) {
+		} catch (MediaException e) {
+			ErrorHandler.doAlert(e);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ErrorHandler.doAlert(e);
 		}
 	}
 	
@@ -77,8 +75,8 @@ public class CaptureThread extends Thread {
 			dos.close();
 			fileConn.close();
 
-		} catch (IOException ioe) {
-			System.out.println("Error!" + ioe);
+		} catch (IOException e) {
+			ErrorHandler.doAlert(e);
 		}
 	}
 	

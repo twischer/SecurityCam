@@ -17,43 +17,29 @@
  */
 package de.wischer.timo.securityCam;
 
+import javax.microedition.lcdui.Alert;
 import javax.microedition.lcdui.Command;
-import javax.microedition.lcdui.CommandListener;
 import javax.microedition.lcdui.Display;
-import javax.microedition.lcdui.Displayable;
-import javax.microedition.lcdui.Form;
 import javax.microedition.midlet.MIDlet;
 
-
-public class ConfigForm extends Form{
-	private final MIDlet midlet;
-	private final Command cmdStart = new Command("Start", Command.SCREEN, 1);
-	private final Command cmdExit = new Command("Exit", Command.SCREEN, 3);
+public class ErrorHandler {
+	private static Display display = null;
 	
-	
-	public ConfigForm(final MIDlet midlet){
-		super("Configuration");
-		
-		this.midlet = midlet;
-		
-		addCommand(cmdStart);
-		addCommand(cmdExit);
-		setCommandListener(new ConfigCommandListener());
-		
-		Display.getDisplay(midlet).setCurrent(this);
+	public static void setMidlet(MIDlet midlet) {
+		display = Display.getDisplay(midlet);
 	}
 	
-	
-	private class ConfigCommandListener implements CommandListener{
-
-		public void commandAction(Command cmd, Displayable s) {
-			if (cmd.equals(cmdStart)) {
-				new CameraForm(midlet);
-			} else if (cmd.equals(cmdExit)) {
-				midlet.notifyDestroyed();
-			}
-		}
-		
+	public static void doAlert(Exception e)
+	{
+		doAlert(e.toString());
 	}
-
+	
+	public static void doAlert(String szText)
+	{
+		Alert alert = new Alert("Error");
+		alert.addCommand( new Command("Back", Command.BACK, 1) );
+		alert.setString(szText);
+		alert.setTimeout(10000);
+		display.setCurrent(alert);
+	}
 }

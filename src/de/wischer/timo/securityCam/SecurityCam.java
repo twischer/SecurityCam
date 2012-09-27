@@ -16,7 +16,7 @@
  *   along with SecurityCam. If not, see <http://www.gnu.org/licenses/>.
  */
 package de.wischer.timo.securityCam;
-import javax.microedition.lcdui.Display;
+
 import javax.microedition.midlet.MIDlet;
 
 public class SecurityCam extends MIDlet {
@@ -25,7 +25,8 @@ public class SecurityCam extends MIDlet {
 	}
 
 	public void startApp() {
-		final Display display = Display.getDisplay(this);
+		ErrorHandler.setMidlet(this);
+		
 		new ConfigForm(this);
 	}
 
