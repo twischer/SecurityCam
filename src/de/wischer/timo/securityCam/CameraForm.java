@@ -52,18 +52,22 @@ public class CameraForm extends Form {
 			videoControl = (VideoControl) player.getControl("VideoControl");
 			player.start();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ErrorHandler.doAlert(e);
 		} catch (MediaException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ErrorHandler.doAlert(e);
 		}
 		
 		addCommand(cmdStop);
 		addCommand(cmdExit);
 		setCommandListener(new CameraCommandListener());
 		
-		Item videoItem = (Item) videoControl.initDisplayMode(VideoControl.USE_GUI_PRIMITIVE, null);
+		
+		Item videoItem = (Item)videoControl.initDisplayMode(VideoControl.USE_GUI_PRIMITIVE, null);
+		try {
+			videoControl.setDisplayFullScreen(true);
+		} catch (MediaException e) {
+			ErrorHandler.doAlert(e);
+		}
 		append(videoItem);
 		
 		Display.getDisplay(midlet).setCurrent(this);
@@ -76,8 +80,7 @@ public class CameraForm extends Form {
 		try {
 			captureThread.stop();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ErrorHandler.doAlert(e);
 		}
 		player.close();
 	}

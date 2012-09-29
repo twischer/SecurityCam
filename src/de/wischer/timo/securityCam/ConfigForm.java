@@ -28,7 +28,7 @@ import javax.microedition.midlet.MIDlet;
 public class ConfigForm extends Form{
 	private final MIDlet midlet;
 	private final Command cmdStart = new Command("Start", Command.SCREEN, 1);
-	private final Command cmdExit = new Command("Exit", Command.SCREEN, 3);
+	private final Command cmdExit = new Command("Exit", Command.SCREEN, 1);
 	
 	
 	public ConfigForm(final MIDlet midlet){

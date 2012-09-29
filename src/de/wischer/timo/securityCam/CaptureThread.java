@@ -21,6 +21,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.file.FileConnection;
@@ -46,8 +47,7 @@ public class CaptureThread extends Thread {
 	public void run() {
 		try {
 		while(running) {
-			final byte[] photo = videoControl.getSnapshot("encoding=jpeg");
-			// &width=320&height=240  width=1280&height=960
+			final byte[] photo = videoControl.getSnapshot("encoding=jpeg&quality=100");
 			saveImage2File(photo);
 			
 			Thread.sleep(snapshotTime*1000);
@@ -61,10 +61,14 @@ public class CaptureThread extends Thread {
 	
 	
 	private void saveImage2File(final byte[] photo) {
-		// Receive a photo as byte array
-		// Save Image to file
 		try {
 			final FileConnection fileConn = (FileConnection) Connector.open(getPictureFileName());
+			
+			// delete folder a hole day if not enough free space available
+			// use a reserve of 8kB on the memory
+			if ( fileConn.availableSize() < (photo.length + 8096) )
+				deleteOldestDayFolder();
+			
 			if (!fileConn.exists()) {
 				fileConn.create();
 			}
@@ -80,6 +84,7 @@ public class CaptureThread extends Thread {
 		}
 	}
 	
+	
 	private final String getPictureFileName() {
 	    Calendar calendar = Calendar.getInstance();
 	    calendar.setTime(new Date());
@@ -91,10 +96,61 @@ public class CaptureThread extends Thread {
 	    int minute = calendar.get(Calendar.MINUTE);
 	    int second = calendar.get(Calendar.SECOND);
 	    
-	    String fileName = destDir + "/" + year + "-" + month + "-" + day + "/IMG_" + hour + "-" + minute + "-" + second + ".jpg";
+	    String fileName = destDir + "/" + year + "-" + getFormattedNumber(month) + "-";
+	    fileName += getFormattedNumber(day) + "/IMG_" + getFormattedNumber(hour) + "-";
+	    fileName += getFormattedNumber(minute) + "-" + getFormattedNumber(second) + ".jpg";
 	    
 	    return fileName;
 	}
+	
+	
+	private final void deleteOldestDayFolder() throws IOException {
+		final FileConnection folderConn = (FileConnection) Connector.open(destDir);
+		
+		long oldestTimeStamp = -1;
+		FileConnection oldestFileConn = null;
+		final Enumeration folderEnum = folderConn.list();
+		while (folderEnum.hasMoreElements()) {
+	         final String folder = (String)folderEnum.nextElement();
+	         final FileConnection fileConn = (FileConnection) Connector.open(folder);
+	         
+	         // use the current folder if it is older
+	         final long timeStamp = fileConn.lastModified();
+	         if (oldestTimeStamp > timeStamp || oldestTimeStamp < 0)
+	         {
+	        	 oldestTimeStamp = timeStamp;
+	        	 
+	        	 if (oldestFileConn != null)
+	        		oldestFileConn.close();
+	        	
+	        	 oldestFileConn = fileConn;
+	         }
+	         else
+	        	 fileConn.close();
+	     }
+		folderConn.close();
+		
+		if (oldestFileConn != null) {
+			oldestFileConn.delete();
+			oldestFileConn.close();
+		}
+		else {
+			ErrorHandler.doAlert("Not enough space on memory. Could not find files of SecurityCam which could be deleted.");
+		}
+			
+    		
+	}
+	
+	
+	private final String getFormattedNumber(int number) {
+		String formattedNumber = "";
+		if (number <= 9)
+			formattedNumber += "0";
+		formattedNumber += number;
+		
+		return formattedNumber;
+	}
+	
 	
 	public void stop() throws InterruptedException{
 		running = false;
