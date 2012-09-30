@@ -41,7 +41,7 @@ public class CameraForm extends Form {
 	private final CaptureThread captureThread;
 
 	
-	public CameraForm(final MIDlet midlet) {
+	public CameraForm(final MIDlet midlet, final String destDir, final int snapshotDelay) {
 		super("Security Cam");
 
 		this.midlet = midlet;
@@ -73,7 +73,7 @@ public class CameraForm extends Form {
 		Display.getDisplay(midlet).setCurrent(this);
 		
 		
-		captureThread = new CaptureThread(videoControl, "file:///4:/SecurityCam", 5);
+		captureThread = new CaptureThread(videoControl, destDir, snapshotDelay);
 	}
 	
 	private void close(){

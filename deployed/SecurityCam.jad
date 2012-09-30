@@ -1,9 +1,9 @@
 MIDlet-1: Security Cam,,de.wischer.timo.securityCam.SecurityCam
-MIDlet-Jar-Size: 9083
+MIDlet-Jar-Size: 11068
 MIDlet-Jar-URL: SecurityCam.jar
 MIDlet-Name: SecurityCam Midlet Suite
 MIDlet-Permissions: javax.microedition.media.control.VideoControl.getSnapshot,javax.microedition.io.Connector.file.read,javax.microedition.io.Connector.file.write
 MIDlet-Vendor: Midlet Suite Vendor
-MIDlet-Version: 1.0.50
+MIDlet-Version: 1.0.52
 MicroEdition-Configuration: CLDC-1.0
-MicroEdition-Profile: MIDP-2.0
+MicroEdition-Profile: MIDP-1.0

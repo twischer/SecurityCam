@@ -31,14 +31,14 @@ import javax.microedition.media.control.VideoControl;
 public class CaptureThread extends Thread {
 	private final VideoControl videoControl;
 	private final String destDir;
-	private final int snapshotTime;
+	private final int snapshotDelay;
 	private boolean running;
 	
 	
-	public CaptureThread(final VideoControl videoControl, final String destDir, final int snapshotTime) {
+	public CaptureThread(final VideoControl videoControl, final String destDir, final int snapshotDelay) {
 		this.videoControl = videoControl;
 		this.destDir = destDir;
-		this.snapshotTime = snapshotTime;
+		this.snapshotDelay = snapshotDelay;
 		running = true;
 		
 		start();
@@ -50,7 +50,7 @@ public class CaptureThread extends Thread {
 			final byte[] photo = videoControl.getSnapshot("encoding=jpeg&quality=100");
 			saveImage2File(photo);
 			
-			Thread.sleep(snapshotTime*1000);
+			Thread.sleep(snapshotDelay*1000);
 		}
 		} catch (MediaException e) {
 			ErrorHandler.doAlert(e);
