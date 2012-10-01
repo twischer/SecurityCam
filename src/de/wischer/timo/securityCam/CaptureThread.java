@@ -47,13 +47,20 @@ public class CaptureThread extends Thread {
 	public void run() {
 		try {
 		while(running) {
-			final byte[] photo = videoControl.getSnapshot("encoding=jpeg&quality=100");
-			saveImage2File(photo);
-			
+			try {
+				final byte[] photo = videoControl.getSnapshot("encoding=jpeg&quality=100");
+				saveImage2File(photo);
+			} catch (MediaException e) {
+				if (e.getMessage().equals("Could not take snapshot.")) {
+					// ignore because could happen if the camera is to slow
+					// not cirtical
+				} else {
+					ErrorHandler.doAlert(e);
+				}
+			}
+
 			Thread.sleep(snapshotDelay*1000);
 		}
-		} catch (MediaException e) {
-			ErrorHandler.doAlert(e);
 		} catch (InterruptedException e) {
 			ErrorHandler.doAlert(e);
 		}
@@ -97,8 +104,8 @@ public class CaptureThread extends Thread {
 	    int second = calendar.get(Calendar.SECOND);
 	    
 	    String fileName = destDir + "/" + year + "-" + getFormattedNumber(month) + "-";
-	    fileName += getFormattedNumber(day) + "/IMG_" + getFormattedNumber(hour) + "-";
-	    fileName += getFormattedNumber(minute) + "-" + getFormattedNumber(second) + ".jpg";
+	    fileName += getFormattedNumber(day) + "/Hour_" + getFormattedNumber(hour) + "/IMG_" + getFormattedNumber(hour);
+	    fileName += "-" + getFormattedNumber(minute) + "-" + getFormattedNumber(second) + ".jpg";
 	    
 	    return fileName;
 	}

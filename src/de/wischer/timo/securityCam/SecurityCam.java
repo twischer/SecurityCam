@@ -20,14 +20,19 @@ package de.wischer.timo.securityCam;
 import javax.microedition.midlet.MIDlet;
 
 public class SecurityCam extends MIDlet {
+	private boolean alreadyStarted;
 
 	public SecurityCam() {
+		alreadyStarted = false;
 	}
 
 	public void startApp() {
-		ErrorHandler.setMidlet(this);
-		
-		new ConfigForm(this);
+		if (!alreadyStarted) {
+			ErrorHandler.setMidlet(this);
+			
+			new ConfigForm(this);
+			alreadyStarted = true;
+		}
 	}
 
 	public void pauseApp() {
