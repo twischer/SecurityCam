@@ -25,129 +25,136 @@ import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Form;
 import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
+import javax.microedition.rms.InvalidRecordIDException;
 import javax.microedition.rms.RecordStore;
 import javax.microedition.rms.RecordStoreException;
 import javax.microedition.rms.RecordStoreFullException;
 import javax.microedition.rms.RecordStoreNotFoundException;
+import javax.microedition.rms.RecordStoreNotOpenException;
 
 public class ConfigForm extends Form {
-	private final String RMS_SETTINGS = "Settings";
-	private final int RMS_DEST_DIR_ID = 1;
-	private final int RMS_SNAPSHOT_DELAY_ID = 2;
-	private final int RMS_LENGTH = 2;
+    private static final String RMS_SETTINGS = "Settings";
+    private static final int RMS_DEST_DIR_ID = 1;
+    private static final int RMS_SNAPSHOT_DELAY_ID = 2;
+    private static final int RMS_MIN_FREE_SPACE_ID = 3;
+    private static final int RMS_LENGTH = 3;
 
-	private final MIDlet midlet;
-	private final Command cmdStart = new Command("Start", Command.SCREEN, 1);
-	private final Command cmdExit = new Command("Exit", Command.SCREEN, 1);
+    private final MIDlet midlet;
+    private final Command cmdStart = new Command("Start", Command.SCREEN, 1);
+    private final Command cmdExit = new Command("Exit", Command.SCREEN, 1);
 
-	private final TextField destDirTextField = new TextField(
-			"Destination directory:", "file:///4:/SecurityCam", 30,
-			TextField.URL);
-	private final String[] listElements = new String[] { "0", "1", "2", "3",
-			"4", "5", "10", "15", "20" };
-	private final ChoiceGroup snapshotDelayChoiceGroup = new ChoiceGroup(
-			"Snapshot delay (sec):", ChoiceGroup.EXCLUSIVE, listElements, null);
+    private final TextField destDirTextField = new TextField("Destination directory:", "file:///4:/SecurityCam", 30, TextField.URL);
+    private final String[] listElements = new String[] { "0", "1", "2", "3", "4", "5", "10", "15", "20" };
+    private final ChoiceGroup snapshotDelayChoiceGroup = new ChoiceGroup("Snapshot delay (sec):", ChoiceGroup.EXCLUSIVE, listElements, null);
+    private final TextField minFreeSpaceTextField = new TextField("Min free space (MiByte):", "10", 3, TextField.NUMERIC);
 
-	public ConfigForm(final MIDlet midlet) {
-		super("Configuration");
+    public ConfigForm(final MIDlet midlet) {
+	super("Configuration");
 
-		this.midlet = midlet;
+	this.midlet = midlet;
 
-		loadSettings();
+	loadSettings();
 
-		addCommand(cmdStart);
-		addCommand(cmdExit);
-		setCommandListener(new ConfigCommandListener());
+	addCommand(cmdStart);
+	addCommand(cmdExit);
+	setCommandListener(new ConfigCommandListener());
 
-		append(destDirTextField);
-		append(snapshotDelayChoiceGroup);
+	append(destDirTextField);
+	append(snapshotDelayChoiceGroup);
+	append(minFreeSpaceTextField);
 
-		Display.getDisplay(midlet).setCurrent(this);
+	Display.getDisplay(midlet).setCurrent(this);
+    }
+
+    private final int getSelectedSnapshotDelay() {
+	final int sel = snapshotDelayChoiceGroup.getSelectedIndex();
+	final String snapshotDelayString = snapshotDelayChoiceGroup.getString(sel);
+	final int snapshotDelay = Integer.parseInt(snapshotDelayString);
+
+	return snapshotDelay;
+    }
+
+    private void loadSettings() {
+	try {
+	    RecordStore rsData = RecordStore.openRecordStore(RMS_SETTINGS, true);
+
+	    if (rsData.getNumRecords() == RMS_LENGTH) {
+		destDirTextField.setString(getSettingAsString(rsData, RMS_DEST_DIR_ID));
+
+		final byte[] snapshotDelay = rsData.getRecord(RMS_SNAPSHOT_DELAY_ID);
+		int snapshotDelayInt = 0;
+		if (snapshotDelay != null)
+		    snapshotDelayInt = (int) snapshotDelay[0];
+		snapshotDelayChoiceGroup.setSelectedIndex(snapshotDelayInt, true);
+		
+		minFreeSpaceTextField.setString(getSettingAsString(rsData, RMS_MIN_FREE_SPACE_ID));
+	    } else {
+		rsData.closeRecordStore();
+		RecordStore.deleteRecordStore(RMS_SETTINGS);
+		rsData = RecordStore.openRecordStore(RMS_SETTINGS, true);
+
+		for (int i = 0; i < RMS_LENGTH; i++)
+		    rsData.addRecord(null, 0, 0);
+	    }
+
+	    rsData.closeRecordStore();
+	} catch (RecordStoreFullException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreNotFoundException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreException e) {
+	    ErrorHandler.doAlert(e);
+	}
+    }
+
+    private String getSettingAsString(final RecordStore rsData, final int id) throws RecordStoreNotOpenException, InvalidRecordIDException,
+	    RecordStoreException {
+	final byte[] setting = rsData.getRecord(id);
+	String settingString = "";
+	if (setting != null)
+	    settingString = new String(setting);
+
+	return settingString;
+    }
+
+    private void saveSettings() {
+	try {
+	    final RecordStore rsData = RecordStore.openRecordStore(RMS_SETTINGS, true);
+
+	    setSetting(rsData, RMS_DEST_DIR_ID, destDirTextField.getString() );
+
+	    final byte[] snapshotDelay = { (byte) snapshotDelayChoiceGroup.getSelectedIndex() };
+	    rsData.setRecord(RMS_SNAPSHOT_DELAY_ID, snapshotDelay, 0, snapshotDelay.length);
+
+	    setSetting(rsData, RMS_MIN_FREE_SPACE_ID, minFreeSpaceTextField.getString() );
+	    
+	    rsData.closeRecordStore();
+	} catch (RecordStoreFullException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreNotFoundException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreException e) {
+	    ErrorHandler.doAlert(e);
+	}
+    }
+    
+    private void setSetting(final RecordStore rsData, final int id, final String setting) throws RecordStoreNotOpenException, InvalidRecordIDException, RecordStoreFullException, RecordStoreException {
+	rsData.setRecord(id, setting.getBytes(), 0, setting.length());
+    }
+
+    private class ConfigCommandListener implements CommandListener {
+
+	public void commandAction(Command cmd, Displayable s) {
+	    if (cmd.equals(cmdStart)) {
+		saveSettings();
+		
+		final int minFreeSpaceInMiByte = Integer.parseInt(minFreeSpaceTextField.getString());
+		new CameraForm(midlet, destDirTextField.getString(), getSelectedSnapshotDelay(), minFreeSpaceInMiByte);
+	    } else if (cmd.equals(cmdExit)) {
+		midlet.notifyDestroyed();
+	    }
 	}
 
-	private final int getSelectedSnapshotDelay() {
-		final int sel = snapshotDelayChoiceGroup.getSelectedIndex();
-		final String snapshotDelayString = snapshotDelayChoiceGroup
-				.getString(sel);
-		final int snapshotDelay = Integer.parseInt(snapshotDelayString);
-
-		return snapshotDelay;
-	}
-
-	private void loadSettings() {
-		try {
-			RecordStore rsData = RecordStore
-					.openRecordStore(RMS_SETTINGS, true);
-
-			if (rsData.getNumRecords() == RMS_LENGTH) {
-				final byte[] destDir = rsData.getRecord(RMS_DEST_DIR_ID);
-				String destDirString = "";
-				if (destDir != null)
-					destDirString = new String(destDir);
-				destDirTextField.setString(destDirString);
-
-				final byte[] snapshotDelay = rsData
-						.getRecord(RMS_SNAPSHOT_DELAY_ID);
-				int snapshotDelayInt = 0;
-				if (snapshotDelay != null)
-					snapshotDelayInt = (int) snapshotDelay[0];
-				snapshotDelayChoiceGroup.setSelectedIndex(snapshotDelayInt,
-						true);
-			} else {
-				rsData.closeRecordStore();
-				RecordStore.deleteRecordStore(RMS_SETTINGS);
-				rsData = RecordStore.openRecordStore(RMS_SETTINGS, true);
-
-				for (int i = 0; i < RMS_LENGTH; i++)
-					rsData.addRecord(null, 0, 0);
-			}
-
-			rsData.closeRecordStore();
-		} catch (RecordStoreFullException e) {
-			ErrorHandler.doAlert(e);
-		} catch (RecordStoreNotFoundException e) {
-			ErrorHandler.doAlert(e);
-		} catch (RecordStoreException e) {
-			ErrorHandler.doAlert(e);
-		}
-	}
-
-	private void saveSettings() {
-		try {
-			final RecordStore rsData = RecordStore.openRecordStore(
-					RMS_SETTINGS, true);
-
-			final String destDir = destDirTextField.getString();
-			rsData.setRecord(RMS_DEST_DIR_ID, destDir.getBytes(), 0,
-					destDir.length());
-
-			final byte[] snapshotDelay = { (byte) snapshotDelayChoiceGroup
-					.getSelectedIndex() };
-			rsData.setRecord(RMS_SNAPSHOT_DELAY_ID, snapshotDelay, 0,
-					snapshotDelay.length);
-
-			rsData.closeRecordStore();
-		} catch (RecordStoreFullException e) {
-			ErrorHandler.doAlert(e);
-		} catch (RecordStoreNotFoundException e) {
-			ErrorHandler.doAlert(e);
-		} catch (RecordStoreException e) {
-			ErrorHandler.doAlert(e);
-		}
-	}
-
-	private class ConfigCommandListener implements CommandListener {
-
-		public void commandAction(Command cmd, Displayable s) {
-			if (cmd.equals(cmdStart)) {
-				saveSettings();
-				new CameraForm(midlet, destDirTextField.getString(),
-						getSelectedSnapshotDelay());
-			} else if (cmd.equals(cmdExit)) {
-				midlet.notifyDestroyed();
-			}
-		}
-
-	}
+    }
 
 }

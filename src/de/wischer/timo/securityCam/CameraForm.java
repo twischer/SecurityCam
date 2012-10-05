@@ -38,10 +38,11 @@ public class CameraForm extends Form {
 	private final Command cmdExit = new Command("Exit", Command.SCREEN, 3);
 	private Player player;
 	private VideoControl videoControl;
-	private final CaptureThread captureThread;
+	private final DelayThread captureThread;
+	private final DelayThread deleteThread;
 
 	
-	public CameraForm(final MIDlet midlet, final String destDir, final int snapshotDelay) {
+	public CameraForm(final MIDlet midlet, final String destDir, final int snapshotDelay, final int minFreeSpaceInMiByte) {
 		super("Security Cam");
 
 		this.midlet = midlet;
@@ -73,12 +74,17 @@ public class CameraForm extends Form {
 		Display.getDisplay(midlet).setCurrent(this);
 		
 		
+		// delay between checking the file system for free space is 20 times more than the snapshot delay
+		final int deleteDelay = ( (snapshotDelay > 0) ? snapshotDelay : 1 ) * 20;
+		deleteThread = new DeleteThread(destDir, deleteDelay, minFreeSpaceInMiByte);
+		
 		captureThread = new CaptureThread(videoControl, destDir, snapshotDelay);
 	}
 	
 	private void close(){
 		try {
 			captureThread.stop();
+			deleteThread.stop();
 		} catch (InterruptedException e) {
 			ErrorHandler.doAlert(e);
 		}
