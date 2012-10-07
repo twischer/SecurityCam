@@ -149,7 +149,8 @@ public class ConfigForm extends Form {
 		saveSettings();
 		
 		final int minFreeSpaceInMiByte = Integer.parseInt(minFreeSpaceTextField.getString());
-		new CameraForm(midlet, destDirTextField.getString(), getSelectedSnapshotDelay(), minFreeSpaceInMiByte);
+		// TODO
+		new CameraForm(midlet, destDirTextField.getString(), getSelectedSnapshotDelay(), true, minFreeSpaceInMiByte);
 	    } else if (cmd.equals(cmdExit)) {
 		midlet.notifyDestroyed();
 	    }

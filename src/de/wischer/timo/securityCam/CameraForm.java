@@ -42,7 +42,7 @@ public class CameraForm extends Form {
 	private final DelayThread deleteThread;
 
 	
-	public CameraForm(final MIDlet midlet, final String destDir, final int snapshotDelay, final int minFreeSpaceInMiByte) {
+	public CameraForm(final MIDlet midlet, final String destDir, final int snapshotDelay, final boolean saveAsVideo, final int minFreeSpaceInMiByte) {
 		super("Security Cam");
 
 		this.midlet = midlet;
@@ -78,7 +78,7 @@ public class CameraForm extends Form {
 		final int deleteDelay = ( (snapshotDelay > 0) ? snapshotDelay : 1 ) * 20;
 		deleteThread = new DeleteThread(destDir, deleteDelay, minFreeSpaceInMiByte);
 		
-		captureThread = new CaptureThread(videoControl, destDir, snapshotDelay);
+		captureThread = new CaptureThread(videoControl, destDir, snapshotDelay, saveAsVideo);
 	}
 	
 	private void close(){

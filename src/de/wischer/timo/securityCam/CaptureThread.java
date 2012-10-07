@@ -30,11 +30,18 @@ import javax.microedition.media.control.VideoControl;
 public class CaptureThread extends DelayThread {
     private final VideoControl videoControl;
     private final String destDir;
+    private final boolean saveAsVideo;
+    private int lastHour;
+    private FileConnection fileConn;
+    private DataOutputStream dataOutputStream;
 
-    public CaptureThread(final VideoControl videoControl, final String destDir, final int snapshotDelay) {
+    public CaptureThread(final VideoControl videoControl, final String destDir, final int snapshotDelay, final boolean saveAsVideo) {
 	super(snapshotDelay);
 	this.videoControl = videoControl;
 	this.destDir = destDir;
+	this.saveAsVideo = saveAsVideo;
+
+	this.lastHour = -1;
 
 	start();
     }
@@ -42,7 +49,7 @@ public class CaptureThread extends DelayThread {
     public void execute() {
 	try {
 	    final byte[] photo = videoControl.getSnapshot("encoding=jpeg&quality=100");
-	    saveImage2File(photo);
+	    saveImage2File(photo, saveAsVideo);
 	} catch (MediaException e) {
 	    if (e.getMessage().equals("Could not take snapshot.")) {
 		// ignore because could happen if the camera is to slow
@@ -53,28 +60,48 @@ public class CaptureThread extends DelayThread {
 	}
     }
 
-    private void saveImage2File(final byte[] photo) {
-	try {
-	    final FileConnection fileConn = (FileConnection) Connector.open(getPictureFileName());
-
-	    if (!fileConn.exists()) {
-		fileConn.create();
+    public void shutdown() {
+	// close old file if opened
+	if (dataOutputStream != null) {
+	    try {
+		dataOutputStream.close();
+		fileConn.close();
+	    } catch (IOException e) {
+		ErrorHandler.doAlert(e);
 	    }
-	    final DataOutputStream dos = new DataOutputStream(fileConn.openOutputStream());
-	    dos.write(photo);
-	    dos.flush();
-	    dos.close();
-	    fileConn.close();
+	}
+    }
 
+    private void saveImage2File(final byte[] photo, final boolean saveAsVideo) {
+	final Calendar calendar = Calendar.getInstance();
+	calendar.setTime(new Date());
+
+	try {
+	    // open new file if it should be saved as a picture or a new hour
+	    // begins
+	    if (!saveAsVideo || calendar.get(Calendar.HOUR_OF_DAY) != lastHour) {
+		lastHour = calendar.get(Calendar.HOUR_OF_DAY);
+		// close old file if opened
+		if (dataOutputStream != null) {
+		    dataOutputStream.close();
+		    fileConn.close();
+		}
+
+		// create and open new file
+		fileConn = (FileConnection) Connector.open(getPictureFileName(calendar, saveAsVideo));
+		if (!fileConn.exists()) {
+		    fileConn.create();
+		}
+		dataOutputStream = new DataOutputStream(fileConn.openOutputStream());
+	    }
+
+	    dataOutputStream.write(photo);
 	} catch (IOException e) {
 	    ErrorHandler.doAlert(e);
 	}
     }
 
-    private final String getPictureFileName() {
-	Calendar calendar = Calendar.getInstance();
-	calendar.setTime(new Date());
-
+    private final String getPictureFileName(final Calendar calendar, final boolean isVideo) {
 	int year = calendar.get(Calendar.YEAR);
 	int month = calendar.get(Calendar.MONTH) + 1;
 	int day = calendar.get(Calendar.DAY_OF_MONTH);
@@ -82,9 +109,12 @@ public class CaptureThread extends DelayThread {
 	int minute = calendar.get(Calendar.MINUTE);
 	int second = calendar.get(Calendar.SECOND);
 
-	String fileName = destDir + "/" + year + "-" + getFormattedNumber(month) + "-";
-	fileName += getFormattedNumber(day) + "/Hour_" + getFormattedNumber(hour) + "/IMG_" + getFormattedNumber(hour);
-	fileName += "-" + getFormattedNumber(minute) + "-" + getFormattedNumber(second) + ".jpg";
+	String fileName = destDir + "/" + year + "-" + getFormattedNumber(month) + "-" + getFormattedNumber(day);
+	if (!isVideo) {
+	    fileName += "/Hour_" + getFormattedNumber(hour);
+	}
+	fileName += "/IMG_" + getFormattedNumber(hour) + "-" + getFormattedNumber(minute) + "-";
+	fileName += getFormattedNumber(second) + (isVideo ? ".mjpg" : ".jpg");
 
 	return fileName;
     }

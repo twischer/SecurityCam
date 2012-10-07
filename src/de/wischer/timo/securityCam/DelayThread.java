@@ -36,9 +36,16 @@ public abstract class DelayThread extends Thread {
 	} catch (InterruptedException e) {
 	    ErrorHandler.doAlert(e);
 	}
+	
+	shutdown();
     }
 
     public abstract void execute();
+    
+    
+    public void shutdown(){
+	// could be implemented by inherit classes
+    }
 
     public void stop() throws InterruptedException {
 	running = false;
