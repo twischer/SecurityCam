@@ -1,0 +1,1 @@
+mplayer ./out.mjpg -speed 0.2
