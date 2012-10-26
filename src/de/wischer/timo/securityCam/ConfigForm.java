@@ -62,7 +62,25 @@ public class ConfigForm extends Form {
 	append(destDirTextField);
 	append(snapshotDelayChoiceGroup);
 	append(minFreeSpaceTextField);
-
+	
+	// Print debug info of last crash
+	try {
+	    RecordStore rsData = RecordStore.openRecordStore("DEBUG", true);
+	    if (rsData.getNumRecords() == 1) {
+		append( getSettingAsString(rsData, 1) );
+	    } else {
+		rsData.addRecord(null, 0, 0);
+	    }
+	    rsData.closeRecordStore();
+	} catch (RecordStoreFullException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreNotFoundException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreException e) {
+	    ErrorHandler.doAlert(e);
+	}
+	
+	
 	Display.getDisplay(midlet).setCurrent(this);
     }
 

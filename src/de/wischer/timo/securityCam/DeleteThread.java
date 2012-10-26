@@ -26,11 +26,13 @@ import javax.microedition.io.file.FileConnection;
 public class DeleteThread extends DelayThread {
     private final String destDir;
     private final long minFreeSpaceInByte;
+    private final long minFreeMemorySpace;
 
     public DeleteThread(final String destDir, final int deleteDelay, final int minFreeSpaceInMiByte) {
 	super(deleteDelay);
 	this.destDir = destDir;
 	this.minFreeSpaceInByte = minFreeSpaceInMiByte * 1024 * 1024;
+	this.minFreeMemorySpace = Runtime.getRuntime().totalMemory() / 100;
 
 	start();
     }
@@ -73,6 +75,13 @@ public class DeleteThread extends DelayThread {
 	    }
 	} catch (IOException e) {
 	    ErrorHandler.doAlert(e);
+	}
+	
+	// run garvage collector if not enough memory space available
+	// some mobile phones do this not automatically
+	final long freeMemory = Runtime.getRuntime().freeMemory();
+	if (freeMemory < minFreeMemorySpace) {
+	    System.gc();
 	}
     }
 }

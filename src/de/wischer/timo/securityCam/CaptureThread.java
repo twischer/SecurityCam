@@ -26,6 +26,10 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.file.FileConnection;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.control.VideoControl;
+import javax.microedition.rms.RecordStore;
+import javax.microedition.rms.RecordStoreException;
+import javax.microedition.rms.RecordStoreFullException;
+import javax.microedition.rms.RecordStoreNotFoundException;
 
 public class CaptureThread extends DelayThread {
     private final VideoControl videoControl;
@@ -86,16 +90,23 @@ public class CaptureThread extends DelayThread {
 		    dataOutputStream.close();
 		    fileConn.close();
 		}
+		
+		setDebugInfo("closed");
 
 		// create and open new file
 		fileConn = (FileConnection) Connector.open(getPictureFileName(calendar, saveAsVideo));
+		setDebugInfo("opend");
 		if (!fileConn.exists()) {
 		    fileConn.create();
 		}
+		setDebugInfo("created");
+		
 		dataOutputStream = new DataOutputStream(fileConn.openOutputStream());
+		setDebugInfo("stream");
 	    }
 
 	    dataOutputStream.write(photo);
+	    dataOutputStream.flush();
 	} catch (IOException e) {
 	    ErrorHandler.doAlert(e);
 	}
@@ -126,5 +137,24 @@ public class CaptureThread extends DelayThread {
 	formattedNumber += number;
 
 	return formattedNumber;
+    }
+    
+    
+    private void setDebugInfo(final String desc) {
+	final long total = Runtime.getRuntime().totalMemory();
+	final long space = Runtime.getRuntime().freeMemory();
+	final String debugInfo = desc + " (space: " + space + ", total: " + total + ")";
+	
+	try {
+	    RecordStore rsData = RecordStore.openRecordStore("DEBUG", true);
+	    rsData.setRecord(1, debugInfo.getBytes(), 0, debugInfo.length());
+	    rsData.closeRecordStore();
+	} catch (RecordStoreFullException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreNotFoundException e) {
+	    ErrorHandler.doAlert(e);
+	} catch (RecordStoreException e) {
+	    ErrorHandler.doAlert(e);
+	}
     }
 }
